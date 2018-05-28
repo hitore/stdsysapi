@@ -624,5 +624,5 @@ app.get('/delete_class', (req, resp) => {
 
 //配置服务端口
 var server = app.listen(3000, function () {
-    console.log('your server are run');
+    console.log('your server are run at http://localhost:3000');
 })
