@@ -27,6 +27,39 @@ let noLogin = {
 	'/login': true,
 };
 
+// 添加管理员
+let user = {
+	id: 1,
+	name: 'test',		// 用户名
+	password: '123456',	// 密码(此处必须是字符串，否则登录失败)
+	power: 1,			// 权限
+};
+
+hasUser();
+function hasUser() {
+	// 系统中是否存在管理员，如果没有则自动添加一个
+	db.find('user', {}, res => {
+		if (res.length > 0) {
+			console.log(`系统已有管理员=>账号:${res[0].name}=>密码:${res[0].password}`);
+		} else {
+			addUser(user);
+		}
+	});
+}
+// 添加管理员
+function addUser(user) {
+	db.find('user', { $or: [ { id: user.id }, { name: user.name } ] }, res => {
+		if (res.length > 0) {
+			console.log('添加管理员失败，id或name已存在');
+		} else {
+			db.insert('user', user, res => {
+				if (res.result.ok) {
+					console.log(`${user.name}已添加成功,密码:${user.password}`);
+				}
+			});
+		}
+	});
+};
 
 app.use(function(req, res, next) {
 	if (req._parsedUrl.pathname.indexOf('api')) {
