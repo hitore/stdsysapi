@@ -9,7 +9,7 @@ var history = require('connect-history-api-fallback');
 
 var secret = 'cym';
 
-var app = express();
+var app =express();
 // 适配SPA页面
 app.use(history());
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -33,11 +33,10 @@ let noLogin = {
 // 添加管理员
 let user = {
 	id: 1,
-	name: 'test',		// 用户名
+	name: 'cym',		// 用户名
 	password: '123456',	// 密码(此处必须是字符串，否则登录失败)
 	power: 1,			// 权限
 };
-
 hasUser();
 function hasUser() {
 	// 系统中是否存在管理员，如果没有则自动添加一个
@@ -63,7 +62,6 @@ function addUser(user) {
 		}
 	});
 };
-
 
 app.use(function(req, res, next) {
 	if (req._parsedUrl.pathname.indexOf('api')) {
@@ -177,14 +175,6 @@ app.post('/add_student', function(req, resp) {
 		msg: '',
 		data: {},
 	};
-	/*
-	id: ''
-	name: ''
-	sex: 0,
-	col: ''
-	class: ''
-	grade: []
-	*/
 	const data = req.body.std_form;
 	const filter = { id: data.id };
 	db.find('student', filter, function(res) {
@@ -199,6 +189,35 @@ app.post('/add_student', function(req, resp) {
 		} else {
 			respone.status = 10002;
 			respone.msg = '该学号已存在';
+			resp.send(respone);
+		}
+	});
+});
+
+// 批量添加学生
+app.post('/add_more_student', function(req, resp) {
+	const respone = {
+		status: 0,
+		msg: '',
+		data: {},
+	};
+	const sex = {
+		'男': 0,
+		'女': 1,
+		'未知': 2,
+	};
+	const data = req.body.std_form;
+	const filter = { id: data.id };
+	data.map(item => {
+		item.sex = sex[item.sex];
+		return item;
+	});
+	db.insertMany('student', data, res => {
+		if (res.result.ok === 1) {
+			resp.send(respone);
+		} else {
+			respone.status = 10003;
+			respone.msg = '添加失败';
 			resp.send(respone);
 		}
 	});
@@ -304,19 +323,23 @@ app.post('/add_teacher', function(req, resp) {
 	 *	 collage: ''
 	 */
 	const data = req.body.tea_form;
-	const filter = { id: data.id };
-	db.find('teacher', filter, function(res) {
+	data.power = 2;
+	const filter = { name: data.name };
+	db.find('user', filter, function(res) {
 		if (res.length === 0) {
-			db.insert('teacher', data, function(res) {
-				if (res.result.n !== 1) {
-					respone.status = 10008;
-					respone.msg = '添加失败';
-				}
-				resp.send(respone);
-			})
+			db.find('user', {}, res2 => {
+				data.id = res2.length + 1;
+				db.insert('user', data, function(res) {
+					if (res.result.n !== 1) {
+						respone.status = 10008;
+						respone.msg = '添加失败';
+					}
+					resp.send(respone);
+				})
+			});
 		} else {
 			respone.status = 10007;
-			respone.msg = '该职工号已存在';
+			respone.msg = '该教师已存在';
 			resp.send(respone);
 		}
 	});
@@ -336,7 +359,7 @@ app.get('/check_teacher', function(req, resp) {
 	*/
 	const page = ~~req.query.page || 1;
 	const count = ~~req.query.count || 7;
-	db.find('teacher', {}, function(res) {
+	db.find('user', { power: 2 }, function(res) {
 		res = res.reverse();
 		const l = res.length;
 		const start = (page - 1) * count;
@@ -362,10 +385,10 @@ app.post('/modifly_teacher', (req, resp) => {
 		data: {},
 	};
 	const data = req.body.tea_form;
-	const filter = { id: data.id };
-	db.find('teacher', filter, (res) => {
+	const filter = { id: ~~data.id };
+	db.find('user', filter, (res) => {
 		if (res.length !== 0) {
-			db.update('teacher', filter, data, (res2) => {
+			db.update('user', filter, data, (res2) => {
 				if (res2.result.n !== 1) {
 					respone.status = 10005;
 					respone.msg = '修改失败';
@@ -380,7 +403,7 @@ app.post('/modifly_teacher', (req, resp) => {
 	});
 });
 
-// 删除学生信息
+// 删除教师信息
 app.get('/delete_teacher', (req, resp) => {
 	const respone = {
 		status: 0,
@@ -388,20 +411,30 @@ app.get('/delete_teacher', (req, resp) => {
 		data: {},
 	};
 	const data = req.query;
-	const filter = { id: data.id };
+	const id = ~~data.id;
+	const filter = { id };
 	// const count = ~~data.count || 7;
-	db.delete('teacher', filter, (res) => {
+	db.delete('user', filter, (res) => {
 		if (res.result.n !== 1) {
 			respone.status = 10006;
 			respone.msg = '删除失败';
 			resp.send(respone);
 		} else {
-			db.find('teacher', {}, (res2) => {
-				const l = res2.length;
-				respone.data.total = l;
-				// respone.data.page_count = l % count > 0 ? parseInt(l / count, 10) + 1 : parseInt(l / count, 10);
-				resp.send(respone);
-			})
+			db.updateMore('user', { id: { $gt: id } }, { $inc: { id: -1 } }, res3 => {
+				if (res3.result.ok) {
+					db.find('user', {}, (res2) => {
+						const l = res2.length;
+						respone.data.total = l;
+						// respone.data.page_count = l % count > 0 ? parseInt(l / count, 10) + 1 : parseInt(l / count, 10);
+						resp.send(respone);
+					});
+				} else {
+					respone.status = 30006;
+					respone.msg = '发生错误';
+					resp.send(respone);
+				}
+			});
+			
 		}
 	});
 });
@@ -417,13 +450,19 @@ app.get('/search_teacher', (req, resp) => {
 	const page = data.page || 1;
 	const count = data.count || 7;
 	let filter = {};
+	// if (data.id) {
+	// 	filter.id = new RegExp(~~data.id);
+	// }
+	// if (data.name) {
+	// 	filter.name = new RegExp(data.name);
+	// }
+	filter.name = data.name;
 	if (data.id) {
-		filter.id = new RegExp(data.id);
+		filter = { id: ~~data.id, power: 2 };
+	} else {
+		filter = { name: data.name, power: 2 };
 	}
-	if (data.name) {
-		filter.name = new RegExp(data.name);
-	}
-	db.find('teacher', filter, (res) => {
+	db.find('user', filter, (res) => {
 		res = res.reverse();
 		const l = res.length;
 		const start = (page - 1) * count;
@@ -438,6 +477,68 @@ app.get('/search_teacher', (req, resp) => {
 		respone.data.total = l;
 		// respone.data.page_count = l % count > 0 ? parseInt(l / count, 10) + 1 : parseInt(l / count, 10);
 		resp.send(respone);
+	});
+});
+
+// 获取教师列表
+app.get('/get_teacher', (res, resp) => {
+	const respone = {
+		status: 0,
+		msg: '',
+		data: {},
+	};
+	const filter = { power: 2 };
+	db.find('user', filter, res => {
+		res.forEach(item => {
+			delete item.password;
+		});
+		respone.data.teacher_list = res;
+		resp.send(respone);
+	});
+});
+
+// 匹配科目
+app.get('/match_subject', (req, resp) => {
+	const respone = {
+		status: 0,
+		msg: '',
+		data: {},
+	};
+	const data = req.query;
+	const subject_id = ~~data.subject_id;
+	const user = data.user;
+	const arr = [];
+	user.forEach(item => {
+		arr.push({ id: ~~item });
+	});
+	const filter = { $or: arr };
+	const filter2 = { $or: arr, subject_list: subject_id };
+	const token = req.headers.authorization;
+	jwt.verify(token, secret, function(err, data) {
+		const power = data.power;
+		if (power !== 1) {
+			respone.status = 30003;
+			respone.msg = '没有添加权限';
+			resp.send(respone);
+		} else {
+			db.find('user', filter2, res => {
+				if (res.length > 0) {
+					respone.status = 30002;
+					respone.msg = '科目已存在';
+					resp.send(respone);
+				} else {
+					db.updateMore('user', filter, { $push: { subject_list: subject_id } }, res2 => {
+						if (res2.result.ok) {
+							resp.send(respone);
+						} else {
+							respone.status = 30001;
+							respone.msg = '添加失败';
+							resp.send(respone);
+						}
+					});
+				}
+			});
+		}
 	});
 });
 
@@ -607,7 +708,6 @@ app.get('/delete_class', (req, resp) => {
 		msg: '',
 		data: {},
 	};
-	//db.collage.update({ 'id': 4 }, { $pull: { 'speciality.1.class': '网络b142' } })
 	const data = req.query;
 	const id = ~~data.id;
 	const speciality_index = ~~data.speciality_index;
@@ -624,6 +724,94 @@ app.get('/delete_class', (req, resp) => {
 		}
 	});
 });
+
+// 添加科目
+app.get('/add_subject', (req, resp) => {
+	const respone = {
+		status: 0,
+		msg: '',
+		data: {},
+	};
+	const data = req.query;
+	const subject_name = data.subject_name;
+	const filter = { name: subject_name };
+	db.find('subject', filter, res => {
+		if (res.length > 0) {
+			respone.status = 10018;
+			respone.msg = '该科目已存在';
+			resp.send(respone);
+		} else {
+			db.find('subject', {}, res2 => {
+				const id = res2[0].count + 1;
+				db.insert('subject', { id, name: subject_name }, res3 => {
+					if (res3.result.ok) {
+						db.updateMore('subject', { count: res2[0].count }, { $inc: { count: 1 } }, res4 => {
+							resp.send(respone);
+						});
+					} else {
+						respone.status = 10019;
+						respone.msg = '添加失败';
+						resp.send(respone);
+					}
+				});
+			});
+		}
+	});
+});
+
+// 查询科目
+app.get('/check_subject', (req, resp) => {
+	const respone = {
+		status: 0,
+		msg: '',
+		data: {},
+	};
+	db.find('subject', {}, res => {
+		respone.data.subject_list = res.splice(1);
+		resp.send(respone);
+	});
+});
+
+// 删除科目
+app.get('/delete_subject', (req, resp) => {
+	const respone = {
+		status: 0,
+		msg: '',
+		data: {},
+	};
+	const data = req.query;
+	const id = ~~data.id;
+	const token = req.headers.authorization;
+	jwt.verify(token, secret, function(err, data) {
+		const power = data.power;
+		if (power === 1) {
+			db.delete('subject', { id }, res => {
+				if (res.result.ok) {
+					resp.send(respone);
+					// db.updateMore('subject', { id: { $gt: id } }, { $inc: { id: -1 } }, res2 => {
+					// 	if (res2.result.ok) {
+					// 		resp.send(respone);
+					// 	} else {
+					// 		respone.status = 10022;
+					// 		respone.msg = '发生错误';
+					// 		resp.send(respone);
+					// 	}
+					// });
+				} else {
+					respone.status = 10021;
+					respone.msg = '删除失败';
+					resp.send(respone);
+				}
+			});
+		} else {
+			respone.status = 10020;
+			respone.msg = '没有删除权限';
+			resp.send(respone);
+		}
+	});
+});
+
+
 
 //配置服务端口
 var server = app.listen(3000, function () {
