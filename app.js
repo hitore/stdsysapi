@@ -5,10 +5,13 @@ var path = require('path');
 var bodyParser = require('body-parser')
 var db = require('./dbhandle.js');
 var jwt = require('jsonwebtoken');
+var history = require('connect-history-api-fallback');
 
 var secret = 'cym';
 
-var app =express();
+var app = express();
+// 适配SPA页面
+app.use(history());
 app.use(express.static(path.join(__dirname, 'dist')));
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -60,6 +63,7 @@ function addUser(user) {
 		}
 	});
 };
+
 
 app.use(function(req, res, next) {
 	if (req._parsedUrl.pathname.indexOf('api')) {
@@ -620,7 +624,6 @@ app.get('/delete_class', (req, resp) => {
 		}
 	});
 });
-
 
 //配置服务端口
 var server = app.listen(3000, function () {

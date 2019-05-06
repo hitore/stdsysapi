@@ -38,6 +38,6 @@ node app
 
 ## TODO
 
-- [ ] 添加connect-history-api-fallback
+- [x] 添加connect-history-api-fallback
 - [ ] 使用mongoose库做数据库读写操作
 - [ ] 优化项目结构
