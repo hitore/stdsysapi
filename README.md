@@ -10,6 +10,7 @@
 ```
 
 # 我的开发版本
+
 	`node -v` -> v8.10.0
 	`mongod -v` -> db version v3.6.3
 
@@ -34,6 +35,7 @@ node app
 ```
 
 ## TODO
+
 	[ ] 添加connect-history-api-fallback
 	[ ] 使用mongoose库做数据库读写操作
 	[ ] 优化项目结构
