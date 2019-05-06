@@ -11,9 +11,9 @@
 
 # 我的开发版本
 
->   `node -v`
-    v8.10.0
-    `mongod -v`
+>   `node -v`  
+    v8.10.0  
+    `mongod -v`  
     db version v3.6.3
 
 ## 拉取仓库
