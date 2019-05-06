@@ -1,19 +1,40 @@
-# stdsysapi
+# 学生成绩管理系统
 
-> A Express project -- 前端代码已部署(dist文件夹)
+基于 node + express 开发的后台系统
 
-## Build Setup
-
-``` bash
-# install dependencies
-npm install/国内用户请使用：cnpm install
-
-# serve with hot reload at localhost:3000
-node app
-
-# the vue project
-前端代码（vue+element+axios）
-https://github.com/hitore/stdsys
-
+# 注意
 ```
+请确保你已安装以下应用:
+1.node
+2.mongodb
+```
+
+# 我的开发版本
+	`node -v` -> v8.10.0
+	`mongod -v` -> db version v3.6.3
+
+## 拉取仓库
+```
+git clone git@github.com:hitore/stdsysapi.git
+cd stdsysapi
+```
+
+## 安装依赖
+```
+npm install
+or
+cnpm install
+or
+yarn install
+```
+
+## 运行
+```
+node app
+```
+
+## TODO
+	[ ] 添加connect-history-api-fallback
+	[ ] 使用mongoose库做数据库读写操作
+	[ ] 优化项目结构
 
