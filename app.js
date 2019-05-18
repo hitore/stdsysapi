@@ -742,10 +742,11 @@ app.get('/add_subject', (req, resp) => {
 			resp.send(respone);
 		} else {
 			db.find('subject', {}, res2 => {
-				const id = res2[0] ? res2[0].count + 1 : 1;
+				const count = res2[0] ? res2[0].count : 0;
+				const id = count + 1;
 				db.insert('subject', { id, name: subject_name }, res3 => {
 					if (res3.result.ok) {
-						db.updateMore('subject', { count: res2[0].count }, { $inc: { count: 1 } }, res4 => {
+						db.updateMore('subject', { count: count }, { $inc: { count: 1 } }, res4 => {
 							resp.send(respone);
 						});
 					} else {
