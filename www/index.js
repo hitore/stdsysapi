@@ -5,10 +5,9 @@ const path = require('path');
 
 const app = express();
 
-/*
 // 适配SPA页面
 app.use(history());
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(path.join(__dirname, '../', 'dist')));
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
 // parse application/json
@@ -21,7 +20,6 @@ app.all('*', function(req, res, next) {
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     next();
 });
-*/
 
 //配置服务端口
 const server = app.listen(3000, function () {

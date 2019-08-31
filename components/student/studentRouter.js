@@ -3,22 +3,13 @@ const express = require('express');
 const router = express.Router();
 const studentController = require('./studentController');
 const studentDAL = require('./studentDAL');
+const student = require('./student');
 
-router.get('/hello', function(req, res) {
+router.get('/getStudentList', function(req, res) {
     studentController.checkStudent(req);
-    const data = studentDAL.getList();
-    // data.addBack(function(err, doc) {
-    //     console.log(doc);
-    // });
-    // res.send(data);
-    // console.log(data);
-    // console.log(req);
-    // console.log(res);
-    // res.send({
-    //     code: 0,
-    //     message: 'success',
-    //     data: {},
-    // });
+    studentDAL.getList(function(data) {
+        res.send(student.getStudentList(data));
+    });
 })
 
 module.exports = router;

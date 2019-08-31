@@ -12,11 +12,19 @@ const blogSchema = new Schema({
 
 const Blog = mongoose.model('student', blogSchema);
 
+// const once = new Blog({
+//     id: '201407044110',
+//     name: 'cym',
+//     sex: '1',
+// });
+// once.save(function(err) {
+//     console.log('saved');
+// });
+
 const student = {
-    getList() {
-        Blog.find({name: ''}, function(err, res) {
-            console.log(1);
-            console.log(res);
+    getList(fn) {
+        Blog.find({}, function(err, res) {
+            fn(res);
         });
         // return Blog.find({}).exec();
     },
